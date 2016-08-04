@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+<head>
+<meta charset="utf-8">
+</head>
+<body style="height: 100%; margin: 0">
+	<div id="container" style="height: 100%"></div>
+	<script type="text/javascript"
+		src="http://echarts.baidu.com/gallery/vendors/echarts/echarts-all-3.js"></script>
+	<script type="text/javascript"
+		src="http://echarts.baidu.com/gallery/vendors/echarts/extension/dataTool.min.js"></script>
+	<script type="text/javascript"
+		src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/china.js"></script>
+	<script type="text/javascript"
+		src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
+	<script type="text/javascript"
+		src="http://api.map.baidu.com/api?v=2.0&ak=ZUONbpqGBsYGXNIYHicvbAbM"></script>
+	<script type="text/javascript"
+		src="http://echarts.baidu.com/gallery/vendors/echarts/extension/bmap.min.js"></script>
+		
+	
+	<script type ="text/javascript" src="js/geoMap.js"></script>
+	<script type ="text/javascript" src="js/jquery-1.11.2.min.js"></script>
+	<script type="text/javascript">
+		var dom = document.getElementById("container");
+		var myChart = echarts.init(dom);
+		var app = {};
+		option = null;
+		var data = null;
+		function convertData(data) {
+			var res = [];
+			for (var i = 0; i < data.length; i++) {
+				var geoCoord = geoCoordMap[data[i].name];
+				if (geoCoord) {
+					res.push({
+						name : data[i].name,
+						value : geoCoord.concat(data[i].value)
+					});
+				}
+			}
+			return res;
+		};
+		function initOp(){
+			option = {
+					backgroundColor : '#404a59',
+					title : {
+						text : '好买app实时激活地图',
+						subtext : '',
+						sublink : 'http://www.howbuy.com',
+						left : 'center',
+						textStyle : {
+							color : '#fff'
+						}
+					},
+					tooltip : {
+						trigger : 'item',
+				        formatter: function (params) {
+				            return params.name + ' : ' + params.value[2];
+				        }
+					},
+					legend : {
+						orient : 'vertical',
+						y : 'bottom',
+						x : 'right',
+						data : [ 'pm2.5' ],
+						textStyle : {
+							color : '#fff'
+						}
+					},
+					geo : {
+						map : 'china',
+						label : {
+							emphasis : {
+								show : false
+							}
+						},
+						roam : true,
+						zoom : 1.4,
+						itemStyle : {
+							normal : {
+								areaColor : '#323c48',
+								borderColor : '#111'
+							},
+							emphasis : {
+								areaColor : '#2a333d'
+							}
+						}
+					},
+					series : [ {
+						name : '激活量',
+						type : 'scatter',
+						coordinateSystem : 'geo',
+						data : convertData(data),
+						symbolSize : function(val) {
+							return val[2] / 50;
+						},
+						label : {
+							normal : {
+								formatter : '{}',
+								position : 'right',
+								show : false
+							},
+							emphasis : {
+								show : true
+							}
+						},
+						itemStyle : {
+							normal : {
+								color : '#ddb926'
+							}
+						}
+					}, {
+						name : '激活量Top5',
+						type : 'effectScatter',
+						coordinateSystem : 'geo',
+						data : convertData(data.sort(function(a, b) {
+							return b.value - a.value;
+						}).slice(0, 5)),
+						symbolSize : function(val) {
+							return val[2] / 50;
+						},
+						showEffectOn : 'render',
+						rippleEffect : {
+							brushType : 'stroke'
+						},
+						hoverAnimation : true,
+						label : {
+							normal : {
+						        formatter: function (params) {
+						            return params.name + ' : ' + params.value[2];
+						        },
+								position : 'right',
+								show : true,
+								textStyle:{
+									fontSize:2
+								}
+							}
+						},
+						itemStyle : {
+							normal : {
+								color : '#ED740A',
+								shadowBlur : 2,
+								shadowColor : '#333'
+							}
+						},
+						zlevel : 1
+					} ]
+				};
+		}
+		
+		//请求数据
+		var beginTime="2016-07-27 00:00:00",bt = beginTime;
+		var endTime="2016-07-28 0:0";
+		function xTime(btm){
+			var d = new Date(btm);
+			var de = d.getDate();
+			if(de==28)d=new Date(beginTime);
+			d.setMinutes(d.getMinutes()+30, 0, 0);
+			return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()+" "+d.getHours()+":"+d.getMinutes();
+		}
+		var reqData = function (){
+			var et = xTime(bt);
+			$.post("cip/query.htm",{"beginTime":bt,"endTime":et},function(citydata){
+				data = citydata;
+				initOp();
+				if (option && typeof option === "object") {
+					option.title.subtext="from:"+bt+",to:"+et;
+					myChart.setOption(option, true);
+					bt = et;
+				}
+			});
+		};
+		reqData(beginTime);
+		setInterval("reqData()", 5000);
+	</script>
+</body>
+</html>

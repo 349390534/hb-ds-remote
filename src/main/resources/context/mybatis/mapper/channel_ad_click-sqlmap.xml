@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- sqlmapper 层 -->
+<mapper namespace="channel_ad_click_ns">
+	<!-- 查询广告点击量,按照点击量倒序输出 -->
+	<select id="select_channel_ad_click_list" parameterType="java.util.Map" resultType="channelAdClick">
+		SELECT t.tag,SUM(t.click_num) clickNums FROM channel_ad_click t
+		WHERE t.proid = #{proid}
+		<if test="beginDate!=null and beginDate!=''">
+			AND t.dt >= #{beginDate}
+		</if>
+		<if test="endDate!=null and endDate!=''">
+			AND t.dt <![CDATA[ <= ]]> #{endDate}
+		</if>
+		<if test="tagArray!=null and tagArray.length gt 0 ">
+			AND t.tag IN
+			<foreach item="tag" index="index" collection="tagArray" 
+                    open="(" separator="," close=")">
+                   ${tag}
+            </foreach>
+		</if>
+		GROUP BY t.tag
+		ORDER BY clickNums DESC
+		LIMIT #{pageNum},#{topNum}
+	</select>
+ 
+</mapper>

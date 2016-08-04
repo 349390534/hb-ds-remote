@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- sqlmapper 层 -->
+<mapper namespace="channel_page_puv">
+	<!-- 私募begin -->
+	<sql id="channel_page_sql_sum_simu">
+		SELECT t.page_id pageId,SUM(t.pv) pv,SUM(t.uv) uv
+	   FROM channel_page_pv_uv_simu t
+	</sql>
+	<!-- 私募查询页面访问量前N个 -->
+	<select id="select_channel_page_list_sm" parameterType="java.util.Map" resultType="channelPage">
+		<include refid="channel_page_sql_sum_simu"></include>
+		WHERE dt >= #{beginDate}
+		AND dt <![CDATA[ <= ]]> #{endDate}
+		AND proid = #{proid}
+		AND page_type = #{pageType}
+		GROUP BY t.page_id
+		ORDER BY pv DESC,uv DESC  LIMIT 0,#{topNum}
+	</select>
+	<!-- 私募end -->
+ 
+ 
+ 	<!-- 资讯begin -->
+ 	<sql id="channel_page_sql_zx_today"><!-- 资讯当日表 -->
+		SELECT t.page_id,t.pv,t.uv
+	   FROM channel_page_pv_uv_news_today t
+	</sql>
+ 	<sql id="channel_page_sql_zx_his"><!-- 资讯历史表 -->
+		SELECT t.page_id,t.pv,t.uv
+	   FROM channel_page_pv_uv_news_his t
+	</sql>
+	
+ 	<!-- 资讯查询条件 -->
+ 	<sql id="channel_page_sql_zx_expresion">
+ 		<if test="ids!=null and ids.length gt 0 ">
+	 			<!-- N位ID -->
+	 			AND t.zid IN 
+	 			<foreach item="item" index="index" collection="ids" 
+	                    open="(" separator="," close=")">
+	                   ${item}
+	            </foreach>
+	 		</if>
+	 		<if test="newsType!=null and newsType.length gt 0 ">
+	 			<!-- 3位newstype -->
+	 			AND t.newstype IN 
+	 			<foreach item="item" index="index" collection="newsType" 
+	                    open="(" separator="," close=")">
+	                   ${item}
+	            </foreach>
+	 		</if>
+	 		<if test="subtype!=null and subtype.length gt 0 ">
+	 			<!-- 4位subtype -->
+	 			AND t.subtype IN 
+	 			<foreach item="item" index="index" collection="subtype" 
+	                    open="(" separator="," close=")">
+	                   ${item}
+	            </foreach>
+	 		</if>
+	 		<if test="author!=null and author!=''">
+	 			<!-- 5位作者 -->
+	 			AND t.author_id = #{author}
+	 		</if>
+ 	</sql>
+ 
+ 	<!-- 查询资讯的排名数据 -->
+ 	<select id="select_zx_page_list" parameterType="java.util.Map" resultType="channelPage">
+ 		SELECT ts.page_id pageId,SUM(ts.pv) pv, SUM(ts.uv) uv FROM (
+ 		<if test="todayDt !=null and todayDt !=''"><!-- 查询今日表 -->
+	 		<include refid="channel_page_sql_zx_today"></include>
+	 		WHERE t.dt = #{todayDt}
+			AND	t.proid = #{proid}
+			AND t.page_id  >="0"
+	 		<include refid="channel_page_sql_zx_expresion"></include>
+	 		UNION ALL 
+ 		</if>
+ 		<include refid="channel_page_sql_zx_his"></include>
+ 		WHERE t.dt >= #{beginDate}
+			AND t.dt <![CDATA[ <= ]]> #{endDate}
+			AND	t.proid = #{proid}
+			AND t.page_id  >="0"
+	 		<include refid="channel_page_sql_zx_expresion"></include>
+	 	) ts
+ 		GROUP BY ts.page_id
+		ORDER BY pv DESC,uv DESC  LIMIT #{pageNum},#{topNum}
+ 	</select>
+ 	
+ 	
+ 	<!-- 查询资讯的排名数据汇总 -->
+ 	<select id="select_zx_page_list_sum" parameterType="java.util.Map" resultType="channelPage">
+ 		SELECT SUM(ts.pv) pv, SUM(ts.uv) uv FROM (
+ 		<if test="todayDt !=null and todayDt !=''"><!-- 查询今日表 -->
+	 		<include refid="channel_page_sql_zx_today"></include>
+	 		WHERE t.dt = #{todayDt}
+			AND	t.proid = #{proid}
+			AND t.page_id  >="0"
+	 		<include refid="channel_page_sql_zx_expresion"></include>
+	 		UNION ALL 
+ 		</if>
+ 		<include refid="channel_page_sql_zx_his"></include>
+ 			WHERE t.dt >= #{beginDate}
+			AND t.dt <![CDATA[ <= ]]> #{endDate}
+			AND	t.proid = #{proid}
+			AND t.page_id  >="0"
+	 		<include refid="channel_page_sql_zx_expresion"></include>
+	 	) ts
+ 	</select>
+ 	
+ 	<!-- 总数 -->
+ 	<select id="count_select_zx_page_list" parameterType="java.util.Map" resultType="java.lang.Long">
+ 		SELECT COUNT(*)  FROM 
+		(SELECT SUM(ts.pv) pv, SUM(ts.uv) uv FROM (
+ 		<if test="todayDt !=null and todayDt !=''"><!-- 查询今日表 -->
+	 		<include refid="channel_page_sql_zx_today"></include>
+	 		WHERE t.dt = #{todayDt}
+			AND	t.proid = #{proid}
+			AND t.page_id  >="0"
+	 		<include refid="channel_page_sql_zx_expresion"></include>
+	 		UNION ALL 
+ 		</if>
+ 		<include refid="channel_page_sql_zx_his"></include>
+ 			WHERE t.dt >= #{beginDate}
+			AND t.dt <![CDATA[ <= ]]> #{endDate}
+			AND	t.proid = #{proid}
+			AND t.page_id  >="0"
+	 		<include refid="channel_page_sql_zx_expresion"></include>
+	 	) ts
+ 		GROUP BY ts.page_id) tr
+ 	</select>
+ 	
+ 	
+ 	<!-- 查询一段日期内的总PV和UV数 -->
+ 	<select id="select_count_pvuv_all" parameterType="java.util.Map" resultType="channelPage">
+ 		SELECT SUM(ts.pv) pv,SUM(ts.uv) uv FROM (
+ 		<if test="todayDt !=null and todayDt !=''"><!-- 查询今日表 -->
+	 		<include refid="channel_page_sql_zx_today"></include>
+	 		WHERE t.dt = #{todayDt}
+			AND	t.proid = #{proid}
+	 		UNION ALL 
+ 		</if>
+		<include refid="channel_page_sql_zx_his"></include>
+ 		WHERE  t.dt >= #{beginDate}
+			AND t.dt <![CDATA[ <= ]]> #{endDate}
+			AND t.proid = #{proid}
+ 			AND t.page_id = #{pageid}
+ 		) ts
+ 	</select>
+ 
+</mapper>

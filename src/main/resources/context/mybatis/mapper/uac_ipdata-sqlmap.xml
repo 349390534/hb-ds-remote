@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- sqlmapper -->
+<mapper namespace="uac_city_ipdata">
+	<resultMap  id="cityIpMap" type="java.util.Map">
+    	<result property="name" column="city"  javaType="java.lang.String"/>  
+        <result property="value" column="atnum" javaType="java.lang.Integer"/>  
+    </resultMap>
+    <select id="select_ipdata" resultMap ="cityIpMap" parameterType="java.util.Map">
+	SELECT city,COUNT(t.req_ip) atnum FROM uac_req_ip_data t WHERE
+	t.req_time >=#{beginTime}
+	AND t.req_time <![CDATA[ < ]]> #{endTime} 
+	 AND t.city!='' GROUP BY city
+	ORDER BY atnum DESC;
+    </select>
+ 
+   
+</mapper>

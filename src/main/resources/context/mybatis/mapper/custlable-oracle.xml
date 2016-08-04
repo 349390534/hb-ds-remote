@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<!-- sqlmapper -->
+<mapper namespace="label_oracle">
+	<resultMap  id="channelMap" type="java.util.Map">
+    	<result property="tagName" column="tagName"  javaType="java.lang.String"/>  
+        <result property="tagCode" column="tagCode" javaType="java.lang.String"/>  
+    </resultMap>
+    <select id="select_cust_label" resultMap ="channelMap">
+        select t.field tagName,t.alias_name tagCode from meta_taxonomy_tag_field t
+    </select>
+ 
+   <select id="select_cust_label2" resultType="java.util.Map">
+        select t.field tagName,t.alias_name tagCode from meta_taxonomy_tag_field t
+    </select>
+</mapper>
